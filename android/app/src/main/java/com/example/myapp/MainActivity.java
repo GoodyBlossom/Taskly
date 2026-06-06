@@ -1,4 +1,4 @@
-package com.goodyblossom.taskflow;
+package com.example.myapp;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -28,7 +28,6 @@ public class MainActivity extends Activity {
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
 
         webView.setWebViewClient(new WebViewClient());
         setContentView(webView);

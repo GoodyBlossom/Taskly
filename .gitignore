@@ -1,6 +1,8 @@
 node_modules/
 git-meta/
 .npm-cache/
+.tools/
+android/manual-build/
 .expo-home/
 .expo/
 dist/

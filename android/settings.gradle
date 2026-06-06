@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Task Flow"
+rootProject.name = "My App Name"
 include ":app"
