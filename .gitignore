@@ -5,7 +5,6 @@ git-meta/
 .expo/
 dist/
 web-build/
-android/
 ios/
 *.jks
 *.p8
