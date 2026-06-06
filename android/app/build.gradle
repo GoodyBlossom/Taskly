@@ -39,6 +39,8 @@ tasks.register("copyReleaseApkToProjectRoot", Copy) {
     rename { "MyAppName-release.apk" }
 }
 
-tasks.named("assembleRelease") {
-    finalizedBy "copyReleaseApkToProjectRoot"
+afterEvaluate {
+    tasks.matching { it.name == "assembleRelease" }.configureEach {
+        finalizedBy "copyReleaseApkToProjectRoot"
+    }
 }
