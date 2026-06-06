@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#111827">
-    <title>My App Name</title>
+    <meta name="theme-color" content="#172033">
+    <title>Task Flow</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -13,7 +13,7 @@
         <div class="hero-top">
           <div>
             <p class="eyebrow">Task Flow</p>
-            <h1>Own your day.</h1>
+            <h1>Task Flow</h1>
           </div>
           <div class="score-card">
             <strong id="progressNumber">0%</strong>
@@ -42,7 +42,7 @@
       <form class="composer" id="taskForm">
         <label class="input-wrap">
           <span>+</span>
-          <input id="taskInput" type="text" autocomplete="off" maxlength="90" placeholder="What needs your energy?">
+          <input id="taskInput" type="text" autocomplete="off" maxlength="90" placeholder="Add a task">
         </label>
         <button type="submit">Add</button>
       </form>
@@ -51,7 +51,7 @@
         <div class="filters">
           <button class="active" type="button" data-filter="all">All</button>
           <button type="button" data-filter="active">Active</button>
-          <button type="button" data-filter="done">Done</button>
+          <button type="button" data-filter="completed">Completed</button>
         </div>
         <button class="clear" id="clearDone" type="button" hidden>Clear</button>
       </nav>

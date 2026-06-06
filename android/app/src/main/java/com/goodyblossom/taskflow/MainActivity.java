@@ -1,4 +1,4 @@
-package com.example.myapp;
+package com.goodyblossom.taskflow;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;

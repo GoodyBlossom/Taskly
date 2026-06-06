@@ -34,7 +34,7 @@
       });
     }
 
-    if (filter === "done") {
+    if (filter === "completed") {
       return tasks.filter(function (task) {
         return task.completed;
       });
@@ -94,7 +94,7 @@
 
       var meta = document.createElement("p");
       meta.className = "task-meta";
-      meta.textContent = task.completed ? "Wrapped up" : "In motion";
+      meta.textContent = task.completed ? "Completed" : "Active";
 
       body.appendChild(title);
       body.appendChild(meta);

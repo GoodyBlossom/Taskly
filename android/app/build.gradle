@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace "com.example.myapp"
+    namespace "com.goodyblossom.taskflow"
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.myapp"
+        applicationId "com.goodyblossom.taskflow"
         minSdk 23
         targetSdk 35
         versionCode 1
@@ -36,7 +36,7 @@ android {
 tasks.register("copyReleaseApkToProjectRoot", Copy) {
     from layout.buildDirectory.file("outputs/apk/release/app-release.apk")
     into rootProject.projectDir.parentFile
-    rename { "MyAppName-release.apk" }
+    rename { "TaskFlow-release.apk" }
 }
 
 tasks.named("assembleRelease") {

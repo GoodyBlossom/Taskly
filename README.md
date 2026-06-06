@@ -1,14 +1,35 @@
-# My App Name
+# Task Flow
 
-My App Name is a compact native Android WebView wrapper for an offline-ready task manager web app.
+Task Flow is a compact React Native mobile task manager. It lets users add tasks, mark tasks complete, delete tasks, filter active and completed tasks, and keep everything saved locally on the phone.
 
-The Android app does not use Expo or React Native. It loads the bundled web app from:
+The primary app is in `App.js` and stores tasks with `@react-native-async-storage/async-storage`.
+
+The repo also includes a native Android WebView wrapper around a bundled offline web app. It loads the local app from:
 
 ```text
 file:///android_asset/www/index.html
 ```
 
-## Run the Web App Locally
+## Features
+
+- Add a task.
+- Mark a task complete or active again.
+- Delete a task.
+- View all, active, and completed tasks.
+- Save tasks locally with device WebView storage.
+- Work offline after installation.
+
+## Run Locally
+
+For React Native/Expo:
+
+```bash
+npm start
+```
+
+Then choose Android, iOS, or web from Expo.
+
+For the bundled web preview:
 
 The web files live in:
 
@@ -30,7 +51,7 @@ http://localhost:8081
 
 ## Build the APK
 
-Make sure Java/JDK and the Android SDK are installed, then run:
+For the included Android wrapper, make sure Java/JDK and the Android SDK are installed, then run:
 
 ```bash
 cd android
@@ -54,7 +75,7 @@ android/app/build/outputs/apk/release/app-release.apk
 After a successful build, Gradle also copies it to the project root as:
 
 ```text
-MyAppName-release.apk
+TaskFlow-release.apk
 ```
 
-This app is bundled for offline use. All CSS, JavaScript, images, and assets are local files inside the APK. The Android `INTERNET` permission remains enabled in case future web features call online APIs.
+This app is bundled for offline use. All CSS, JavaScript, images, and assets are local files inside the APK.
