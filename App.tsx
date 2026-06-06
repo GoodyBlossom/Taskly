@@ -21,12 +21,15 @@ type Task = {
   createdAt: number;
 };
 
+type Filter = "all" | "active" | "done";
+
 const STORAGE_KEY = "task-flow.tasks.v1";
 
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskTitle, setTaskTitle] = useState("");
   const [isReady, setIsReady] = useState(false);
+  const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
     let mounted = true;
@@ -75,9 +78,22 @@ export default function App() {
     const completed = tasks.filter((task) => task.completed).length;
     return {
       completed,
-      active: tasks.length - completed
+      active: tasks.length - completed,
+      progress: tasks.length ? completed / tasks.length : 0
     };
   }, [tasks]);
+
+  const visibleTasks = useMemo(() => {
+    if (filter === "active") {
+      return tasks.filter((task) => !task.completed);
+    }
+
+    if (filter === "done") {
+      return tasks.filter((task) => task.completed);
+    }
+
+    return tasks;
+  }, [filter, tasks]);
 
   function addTask() {
     const title = taskTitle.trim();
@@ -110,35 +126,63 @@ export default function App() {
     setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
   }
 
+  function clearCompleted() {
+    setTasks((currentTasks) => currentTasks.filter((task) => !task.completed));
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.screen}
       >
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.kicker}>Task Flow</Text>
-            <Text style={styles.title}>Keep today moving.</Text>
+        <View style={styles.hero}>
+          <View style={styles.heroTop}>
+            <View>
+              <Text style={styles.kicker}>Task Flow</Text>
+              <Text style={styles.title}>Own your day.</Text>
+            </View>
+            <View style={styles.scoreTile}>
+              <Text style={styles.scoreNumber}>{Math.round(stats.progress * 100)}%</Text>
+              <Text style={styles.scoreLabel}>done</Text>
+            </View>
           </View>
-          <View style={styles.countBadge}>
-            <Text style={styles.countNumber}>{stats.active}</Text>
-            <Text style={styles.countLabel}>active</Text>
+
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${stats.progress * 100}%` }]} />
+          </View>
+
+          <View style={styles.statRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.active}</Text>
+              <Text style={styles.statLabel}>Active</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{stats.completed}</Text>
+              <Text style={styles.statLabel}>Complete</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{tasks.length}</Text>
+              <Text style={styles.statLabel}>Total</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.inputRow}>
-          <TextInput
-            accessibilityLabel="Task title"
-            onChangeText={setTaskTitle}
-            onSubmitEditing={addTask}
-            placeholder="Add a task"
-            placeholderTextColor="#8792A2"
-            returnKeyType="done"
-            style={styles.input}
-            value={taskTitle}
-          />
+        <View style={styles.composer}>
+          <View style={styles.inputWrap}>
+            <Text style={styles.inputPrefix}>+</Text>
+            <TextInput
+              accessibilityLabel="Task title"
+              onChangeText={setTaskTitle}
+              onSubmitEditing={addTask}
+              placeholder="What needs your energy?"
+              placeholderTextColor="#8E98A8"
+              returnKeyType="done"
+              style={styles.input}
+              value={taskTitle}
+            />
+          </View>
           <Pressable
             accessibilityRole="button"
             disabled={!taskTitle.trim()}
@@ -153,23 +197,49 @@ export default function App() {
           </Pressable>
         </View>
 
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryText}>{tasks.length} total</Text>
-          <Text style={styles.summaryText}>{stats.completed} completed</Text>
+        <View style={styles.toolbar}>
+          <View style={styles.filterGroup}>
+            {(["all", "active", "done"] as Filter[]).map((option) => (
+              <Pressable
+                accessibilityRole="button"
+                key={option}
+                onPress={() => setFilter(option)}
+                style={[styles.filterButton, filter === option && styles.filterButtonActive]}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    filter === option && styles.filterButtonTextActive
+                  ]}
+                >
+                  {option === "all" ? "All" : option === "active" ? "Active" : "Done"}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          {stats.completed > 0 ? (
+            <Pressable accessibilityRole="button" onPress={clearCompleted} style={styles.clearButton}>
+              <Text style={styles.clearButtonText}>Clear</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <FlatList
-          contentContainerStyle={tasks.length ? styles.list : styles.emptyList}
-          data={tasks}
+          contentContainerStyle={visibleTasks.length ? styles.list : styles.emptyList}
+          data={visibleTasks}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No tasks yet</Text>
-              <Text style={styles.emptyCopy}>Add your first task to start the flow.</Text>
+              <Text style={styles.emptyTitle}>
+                {tasks.length ? "Nothing here" : "Fresh slate"}
+              </Text>
+              <Text style={styles.emptyCopy}>
+                {tasks.length ? "Switch filters or add a new task." : "Add one focused task to begin."}
+              </Text>
             </View>
           }
           renderItem={({ item }) => (
-            <View style={styles.taskCard}>
+            <View style={[styles.taskCard, item.completed && styles.taskCardDone]}>
               <Pressable
                 accessibilityLabel={item.completed ? "Mark task active" : "Mark task complete"}
                 accessibilityRole="checkbox"
@@ -182,13 +252,14 @@ export default function App() {
                 ]}
               >
                 <Text style={[styles.checkMark, item.completed && styles.checkMarkDone]}>
-                  ✓
+                  {item.completed ? "OK" : ""}
                 </Text>
               </Pressable>
               <Pressable onPress={() => toggleTask(item.id)} style={styles.taskBody}>
                 <Text style={[styles.taskTitle, item.completed && styles.taskTitleDone]}>
                   {item.title}
                 </Text>
+                <Text style={styles.taskMeta}>{item.completed ? "Wrapped up" : "In motion"}</Text>
               </Pressable>
               <Pressable
                 accessibilityLabel="Delete task"
@@ -210,119 +281,228 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F6F8FB"
+    backgroundColor: "#E9EEF6"
   },
   screen: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 28,
+    paddingHorizontal: 18,
+    paddingTop: 18,
     width: "100%",
     maxWidth: 680,
     alignSelf: "center"
   },
-  header: {
+  hero: {
+    borderRadius: 8,
+    backgroundColor: "#111827",
+    padding: 18,
+    marginBottom: 16,
+    shadowColor: "#111827",
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 5
+  },
+  heroTop: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 16,
-    marginBottom: 24
+    gap: 16
   },
   kicker: {
-    color: "#1D4ED8",
-    fontSize: 15,
+    color: "#7DD3FC",
+    fontSize: 13,
     fontWeight: "800",
-    marginBottom: 6
+    marginBottom: 8,
+    textTransform: "uppercase"
   },
   title: {
-    color: "#111827",
-    fontSize: 34,
+    color: "#FFFFFF",
+    fontSize: 36,
     fontWeight: "800",
-    lineHeight: 39
+    lineHeight: 40
   },
-  countBadge: {
+  scoreTile: {
     minWidth: 78,
     borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 12,
     paddingVertical: 12,
-    alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3
+    alignItems: "center"
   },
-  countNumber: {
+  scoreNumber: {
     color: "#111827",
-    fontSize: 24,
+    fontSize: 23,
     fontWeight: "800"
   },
-  countLabel: {
+  scoreLabel: {
     color: "#64748B",
     fontSize: 12,
     fontWeight: "700",
     textTransform: "uppercase"
   },
-  inputRow: {
+  progressTrack: {
+    height: 8,
+    borderRadius: 8,
+    backgroundColor: "#334155",
+    overflow: "hidden",
+    marginTop: 22,
+    marginBottom: 18
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 8,
+    backgroundColor: "#2DD4BF"
+  },
+  statRow: {
+    flexDirection: "row",
+    gap: 10
+  },
+  statItem: {
+    flex: 1,
+    borderRadius: 8,
+    backgroundColor: "#1F2937",
+    padding: 12
+  },
+  statNumber: {
+    color: "#FFFFFF",
+    fontSize: 19,
+    fontWeight: "800"
+  },
+  statLabel: {
+    color: "#CBD5E1",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 2
+  },
+  composer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10
+    gap: 10,
+    marginBottom: 14
+  },
+  inputWrap: {
+    flex: 1,
+    minHeight: 58,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D5DCE8",
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    shadowColor: "#334155",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2
+  },
+  inputPrefix: {
+    color: "#2DD4BF",
+    fontSize: 22,
+    fontWeight: "900",
+    marginRight: 8
   },
   input: {
     flex: 1,
-    minHeight: 54,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#D8DEE8",
-    backgroundColor: "#FFFFFF",
     color: "#111827",
     fontSize: 16,
-    paddingHorizontal: 16
+    fontWeight: "700",
+    minHeight: 54
   },
   addButton: {
-    minHeight: 54,
+    minHeight: 58,
     borderRadius: 8,
-    backgroundColor: "#1D4ED8",
-    paddingHorizontal: 22,
+    backgroundColor: "#F97316",
+    paddingHorizontal: 20,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    shadowColor: "#F97316",
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3
   },
   addButtonDisabled: {
-    backgroundColor: "#AFC1E8"
+    backgroundColor: "#B8C1D1",
+    shadowOpacity: 0
   },
   addButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "800"
   },
-  summaryRow: {
+  toolbar: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 18,
-    marginBottom: 8
+    gap: 12,
+    marginBottom: 10
   },
-  summaryText: {
+  filterGroup: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 8,
+    backgroundColor: "#DDE5F0",
+    flexDirection: "row",
+    padding: 4
+  },
+  filterButton: {
+    flex: 1,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  filterButtonActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#334155",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1
+  },
+  filterButtonText: {
     color: "#64748B",
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "800"
+  },
+  filterButtonTextActive: {
+    color: "#111827"
+  },
+  clearButton: {
+    minHeight: 42,
+    borderRadius: 8,
+    backgroundColor: "#FFE4E6",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14
+  },
+  clearButtonText: {
+    color: "#BE123C",
+    fontSize: 13,
     fontWeight: "700"
   },
   list: {
-    paddingTop: 8,
+    paddingTop: 6,
     paddingBottom: 28,
-    gap: 12
+    gap: 10
   },
   emptyList: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingBottom: 60
+    paddingBottom: 44
   },
   emptyState: {
     alignItems: "center",
-    paddingHorizontal: 24
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D5DCE8",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 24,
+    paddingVertical: 34
   },
   emptyTitle: {
     color: "#111827",
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
     marginBottom: 8
   },
@@ -332,65 +512,77 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   taskCard: {
-    minHeight: 72,
+    minHeight: 78,
     borderRadius: 8,
     backgroundColor: "#FFFFFF",
-    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E3E8F0",
+    padding: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
+    shadowColor: "#334155",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 2
   },
+  taskCardDone: {
+    backgroundColor: "#F8FAFC"
+  },
   checkButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 38,
+    height: 38,
+    borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#A7B1C2",
+    borderColor: "#CBD5E1",
+    backgroundColor: "#F8FAFC",
     alignItems: "center",
     justifyContent: "center"
   },
   checkButtonDone: {
-    backgroundColor: "#16A34A",
-    borderColor: "#16A34A"
+    backgroundColor: "#2DD4BF",
+    borderColor: "#2DD4BF"
   },
   checkMark: {
-    color: "transparent",
-    fontSize: 18,
+    color: "#FFFFFF",
+    fontSize: 11,
     fontWeight: "900",
-    lineHeight: 20
+    lineHeight: 13
   },
   checkMarkDone: {
-    color: "#FFFFFF"
+    color: "#083B3A"
   },
   taskBody: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 48,
     justifyContent: "center"
   },
   taskTitle: {
     color: "#111827",
-    fontSize: 16,
-    fontWeight: "700"
+    fontSize: 17,
+    fontWeight: "800",
+    marginBottom: 4
   },
   taskTitleDone: {
     color: "#8A94A6",
     textDecorationLine: "line-through"
   },
+  taskMeta: {
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "700"
+  },
   deleteButton: {
-    minHeight: 42,
+    minHeight: 40,
     borderRadius: 8,
-    backgroundColor: "#FEE2E2",
+    backgroundColor: "#F1F5F9",
     paddingHorizontal: 12,
     alignItems: "center",
     justifyContent: "center"
   },
   deleteButtonText: {
-    color: "#B91C1C",
+    color: "#E11D48",
     fontSize: 13,
     fontWeight: "800"
   },
